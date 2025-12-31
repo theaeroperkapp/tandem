@@ -72,6 +72,24 @@ export async function POST(request: NextRequest) {
     // Parse user agent
     const uaInfo = parseUserAgent(userAgent);
 
+    // Get location from IP using free geolocation API
+    let city = null;
+    let region = null;
+    let country = null;
+    try {
+      if (ip && ip !== 'unknown') {
+        const geoResponse = await fetch(`http://ip-api.com/json/${ip}?fields=city,regionName,country`);
+        if (geoResponse.ok) {
+          const geoData = await geoResponse.json();
+          city = geoData.city || null;
+          region = geoData.regionName || null;
+          country = geoData.country || null;
+        }
+      }
+    } catch {
+      // Silently fail geolocation - don't block tracking
+    }
+
     // Insert visit record
     const { error } = await supabase.from('page_visits').insert({
       session_id: sessionId,
@@ -83,6 +101,9 @@ export async function POST(request: NextRequest) {
       os: uaInfo.os,
       device_type: uaInfo.device_type,
       ip_address: ip,
+      city,
+      region,
+      country,
       screen_width: screenWidth,
       screen_height: screenHeight,
       viewport_width: viewportWidth,

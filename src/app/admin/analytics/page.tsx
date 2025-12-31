@@ -40,9 +40,9 @@ interface AnalyticsData {
     os: string;
     device_type: string;
     ip_address: string;
+    city: string | null;
+    region: string | null;
     visited_at: string;
-    screen_width: number;
-    screen_height: number;
   }>;
   recentChats: Array<{
     id: string;
@@ -281,10 +281,10 @@ export default function AnalyticsPage() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left py-2 px-2 font-medium">Time</th>
+                    <th className="text-left py-2 px-2 font-medium">Location</th>
                     <th className="text-left py-2 px-2 font-medium">Device</th>
                     <th className="text-left py-2 px-2 font-medium">Browser</th>
                     <th className="text-left py-2 px-2 font-medium">OS</th>
-                    <th className="text-left py-2 px-2 font-medium">Screen</th>
                     <th className="text-left py-2 px-2 font-medium">IP</th>
                   </tr>
                 </thead>
@@ -295,6 +295,11 @@ export default function AnalyticsPage() {
                         {formatTime(visit.visited_at)}
                       </td>
                       <td className="py-2 px-2">
+                        {visit.city && visit.region
+                          ? `${visit.city}, ${visit.region}`
+                          : visit.city || visit.region || '-'}
+                      </td>
+                      <td className="py-2 px-2">
                         <div className="flex items-center gap-1">
                           {getDeviceIcon(visit.device_type)}
                           <span className="capitalize">{visit.device_type}</span>
@@ -302,9 +307,6 @@ export default function AnalyticsPage() {
                       </td>
                       <td className="py-2 px-2">{visit.browser}</td>
                       <td className="py-2 px-2">{visit.os}</td>
-                      <td className="py-2 px-2 text-muted-foreground">
-                        {visit.screen_width}x{visit.screen_height}
-                      </td>
                       <td className="py-2 px-2 font-mono text-xs">{visit.ip_address}</td>
                     </tr>
                   ))}
