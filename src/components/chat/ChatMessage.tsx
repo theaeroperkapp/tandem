@@ -15,14 +15,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div
       className={cn(
-        'flex gap-3 p-4',
-        isUser ? 'bg-muted/50' : 'bg-background'
+        'flex gap-3 py-4 px-2',
+        isUser && 'flex-row-reverse'
       )}
     >
       <div
         className={cn(
           'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-secondary'
+          isUser
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-primary/10 text-primary'
         )}
       >
         {isUser ? (
@@ -31,15 +33,26 @@ export function ChatMessage({ message }: ChatMessageProps) {
           <Building2 className="h-4 w-4" />
         )}
       </div>
-      <div className="flex-1 space-y-2 overflow-hidden">
-        <div className="text-sm font-medium">
-          {isUser ? 'You' : 'Tandem'}
-        </div>
-        <div className="prose prose-sm dark:prose-invert max-w-none">
+      <div
+        className={cn(
+          'flex-1 space-y-1 overflow-hidden',
+          isUser && 'flex flex-col items-end'
+        )}
+      >
+        <div
+          className={cn(
+            'inline-block rounded-2xl px-4 py-2.5 max-w-[85%]',
+            isUser
+              ? 'bg-primary text-primary-foreground rounded-tr-md'
+              : 'bg-muted rounded-tl-md'
+          )}
+        >
           {isUser ? (
-            <p>{message.content}</p>
+            <p className="text-sm leading-relaxed">{message.content}</p>
           ) : (
-            <ReactMarkdown>{message.content}</ReactMarkdown>
+            <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:my-1 prose-headings:mt-4 prose-headings:mb-2 prose-ul:my-2 prose-li:my-0.5">
+              <ReactMarkdown>{message.content}</ReactMarkdown>
+            </div>
           )}
         </div>
       </div>

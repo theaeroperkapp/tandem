@@ -1,13 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MatchedListing } from '@/types';
 import {
   Building2,
-  DollarSign,
   Users,
   MapPin,
   Calendar,
@@ -16,6 +15,7 @@ import {
   Monitor,
   Wifi,
   FileText,
+  Sparkles,
 } from 'lucide-react';
 
 interface ListingCardProps {
@@ -31,7 +31,7 @@ const amenityIcons: Record<string, typeof Building2> = {
   '24_7_access': Wifi,
 };
 
-export function ListingCard({ listing, onGenerateLease, showDetails = false }: ListingCardProps) {
+export function ListingCard({ listing, onGenerateLease }: ListingCardProps) {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -44,81 +44,82 @@ export function ListingCard({ listing, onGenerateLease, showDetails = false }: L
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric',
     });
   };
 
+  const getScoreColor = (score: number) => {
+    if (score >= 85) return 'bg-green-500';
+    if (score >= 70) return 'bg-blue-500';
+    return 'bg-amber-500';
+  };
+
   return (
-    <Card className="overflow-hidden h-full flex flex-col">
+    <Card className="overflow-hidden h-full flex flex-col group hover:shadow-lg transition-shadow duration-300">
       {/* Image */}
-      <div className="relative h-48 bg-muted">
+      <div className="relative h-40 bg-muted overflow-hidden">
         {listing.primary_image_url ? (
           <Image
             src={listing.primary_image_url}
             alt={listing.title}
             fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 768px) 100vw, 33vw"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Building2 className="h-12 w-12 text-muted-foreground" />
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
+            <Building2 className="h-10 w-10 text-primary/30" />
           </div>
         )}
         {/* Match Score Badge */}
         <div className="absolute top-2 right-2">
-          <Badge
-            variant={listing.matchScore >= 80 ? 'default' : 'secondary'}
-            className="text-sm font-semibold"
-          >
-            {listing.matchScore}% Match
-          </Badge>
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-white text-xs font-semibold ${getScoreColor(listing.matchScore)}`}>
+            <Sparkles className="h-3 w-3" />
+            {listing.matchScore}%
+          </div>
+        </div>
+        {/* Price overlay */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+          <p className="text-white font-bold text-lg">{formatPrice(listing.price_per_month)}<span className="text-white/80 text-sm font-normal">/mo</span></p>
         </div>
       </div>
 
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{listing.title}</CardTitle>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <MapPin className="h-3 w-3" />
-          {listing.neighborhood}, {listing.city}
+      <CardContent className="flex-1 p-4 space-y-3">
+        {/* Title & Location */}
+        <div>
+          <h3 className="font-semibold text-sm line-clamp-1">{listing.title}</h3>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+            <MapPin className="h-3 w-3" />
+            {listing.neighborhood}, {listing.city === 'San Francisco' ? 'SF' : 'NYC'}
+          </div>
         </div>
-      </CardHeader>
 
-      <CardContent className="flex-1 space-y-3">
         {/* Key Metrics */}
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className="flex items-center gap-1">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span className="font-semibold">{formatPrice(listing.price_per_month)}</span>
-            <span className="text-muted-foreground">/mo</span>
+        <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Users className="h-3.5 w-3.5" />
+            <span>{listing.max_capacity} people</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span>Up to {listing.max_capacity}</span>
-          </div>
-          <div className="col-span-2 text-muted-foreground">
-            {listing.square_feet.toLocaleString()} sqft &middot; ${listing.price_per_sqft}/sqft
+          <div className="text-muted-foreground">
+            {listing.square_feet.toLocaleString()} sqft
           </div>
         </div>
 
         {/* Availability */}
-        <div className="flex items-center gap-1 text-sm">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Calendar className="h-3.5 w-3.5" />
           <span>Available {formatDate(listing.available_date)}</span>
         </div>
 
         {/* Amenities */}
         <div className="flex flex-wrap gap-1">
-          {Object.entries(listing.amenities).map(([key, value]) => {
+          {Object.entries(listing.amenities).slice(0, 4).map(([key, value]) => {
             if (!value) return null;
             const Icon = amenityIcons[key] || Building2;
-            const label = typeof value === 'number'
-              ? `${value} ${key.replace(/_/g, ' ')}`
-              : key.replace(/_/g, ' ');
             return (
-              <Badge key={key} variant="outline" className="text-xs">
-                <Icon className="h-3 w-3 mr-1" />
-                {label}
+              <Badge key={key} variant="secondary" className="text-[10px] px-1.5 py-0.5 font-normal">
+                <Icon className="h-2.5 w-2.5 mr-0.5" />
+                {typeof value === 'number' ? value : ''}
+                {key.replace(/_/g, ' ').replace('24 7', '24/7')}
               </Badge>
             );
           })}
@@ -126,29 +127,18 @@ export function ListingCard({ listing, onGenerateLease, showDetails = false }: L
 
         {/* Why This Match */}
         {listing.reasoning && (
-          <div className="mt-3 p-2 bg-muted/50 rounded-md">
-            <p className="text-xs font-medium mb-1">Why this works:</p>
-            <p className="text-xs text-muted-foreground">{listing.reasoning}</p>
-          </div>
-        )}
-
-        {/* Highlights */}
-        {showDetails && listing.highlights && listing.highlights.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium">Highlights:</p>
-            <ul className="text-xs text-muted-foreground space-y-0.5">
-              {listing.highlights.map((h, i) => (
-                <li key={i}>• {h}</li>
-              ))}
-            </ul>
+          <div className="pt-2 border-t">
+            <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
+              {listing.reasoning}
+            </p>
           </div>
         )}
       </CardContent>
 
       {onGenerateLease && (
-        <CardFooter className="pt-0">
-          <Button onClick={onGenerateLease} className="w-full" size="sm">
-            <FileText className="h-4 w-4 mr-2" />
+        <CardFooter className="p-3 pt-0">
+          <Button onClick={onGenerateLease} className="w-full h-8 text-xs" size="sm">
+            <FileText className="h-3.5 w-3.5 mr-1.5" />
             Generate Lease
           </Button>
         </CardFooter>
